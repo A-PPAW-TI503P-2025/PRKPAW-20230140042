@@ -4,4 +4,4 @@ Screenshot endpoint presensi checkin dan checkout.
 Screenshot database setelah presensi:
 ![alt text](<SS/Screenshot (244).png>)
 Screenshot endpoint report.
-![alt text](<SS/Screenshot (244).png>)
+![alt text](<SS/Screenshot (241).png>)
