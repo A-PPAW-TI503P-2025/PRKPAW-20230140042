@@ -1,5 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// Import komponen dari folder components
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import DashboardPage from './components/DashboardPage';
@@ -7,21 +9,21 @@ import DashboardPage from './components/DashboardPage';
 function App() {
   return (
     <Router>
-      <div>
-        {/* Navigasi ini bisa dihapus jika tidak diperlukan */}
-        <nav className="p-4 bg-gray-100">
-          <Link to="/login" className="mr-4">Login</Link>
-          <Link to="/register">Register</Link>
-        </nav>
+      <Routes>
+        {/* Route untuk Login */}
+        <Route path="/login" element={<LoginPage />} />
         
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/" element={<LoginPage />} /> 
-        </Routes>
-      </div>
+        {/* Route untuk Register */}
+        <Route path="/register" element={<RegisterPage />} />
+        
+        {/* Route untuk Dashboard */}
+        <Route path="/dashboard" element={<DashboardPage />} />
+        
+        {/* Redirect root (/) ke halaman login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
     </Router>
   );
 }
+
 export default App;
