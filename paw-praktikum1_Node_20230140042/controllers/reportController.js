@@ -1,26 +1,28 @@
-const { Presensi } = require("../models");
+const { Presensi, User } = require("../models");
 const { Op } = require("sequelize");
+
+const { format } = require("date-fns-tz");
 
 exports.getDailyReport = async (req, res) => {
   try {
-    const { nama, tanggalMulai, tanggalSelesai } = req.query;
-    let options = { where: {} };
+    const { nama } = req.query;
+
+    let options = {
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["nama"],
+        },
+      ],
+    };
 
     if (nama) {
-      options.where.nama = {
-        [Op.like]: `%${nama}%`,
-      };
-    }
-
-    if (tanggalMulai && tanggalSelesai) {
-      const startDate = new Date(tanggalMulai);
-      startDate.setHours(0, 0, 0, 0);
-
-      const endDate = new Date(tanggalSelesai);
-      endDate.setHours(23, 59, 59, 999);
-
-      options.where.checkIn = {
-        [Op.between]: [startDate, endDate],
+      // Baris ini akan error jika 'Op' tidak diimpor
+      options.include[0].where = {
+        nama: {
+          [Op.like]: `%${nama}%`,
+        },
       };
     }
 

@@ -1,29 +1,57 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import LoginPage from "./components/LoginPage";
+import RegisterPage from "./components/RegisterPage";
+import DashboardPage from "./components/DashboardPage";
+import AttendancePage from "./components/AttendancePage";
+import ReportPage from "./components/ReportPage";
+import Navbar from "./components/Navbar";
+import "leaflet/dist/leaflet.css";
 
-// Import komponen dari folder components
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import DashboardPage from './components/DashboardPage';
+const MainLayout = ({ children }) => {
+  return (
+    <div>
+      <Navbar />
+      <main>{children}</main>
+    </div>
+  );
+};
 
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Route untuk Login */}
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* Route untuk Register */}
-        <Route path="/register" element={<RegisterPage />} />
-        
-        {/* Route untuk Dashboard */}
-        <Route path="/dashboard" element={<DashboardPage />} />
-        
-        {/* Redirect root (/) ke halaman login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <div>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <MainLayout>
+                <DashboardPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <MainLayout>
+                <AttendancePage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <MainLayout>
+                <ReportPage />
+              </MainLayout>
+            }
+          />
+          <Route path="/" element={<LoginPage />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
-
 export default App;

@@ -5,7 +5,7 @@ import { Mail, Lock, LogIn, Loader2, GraduationCap } from 'lucide-react';
 function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(''); // State untuk pesan error
+  const [errorMessage, setErrorMessage] = useState(''); 
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -16,7 +16,7 @@ function LoginPage() {
       ...formData,
       [e.target.name]: e.target.value
     });
-    setErrorMessage(''); // Hapus pesan error saat pengguna mulai mengetik
+    setErrorMessage(''); 
   };
 
   const handleSubmit = async (e) => {
@@ -25,7 +25,6 @@ function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Menggunakan fetch API untuk simulasi login
       const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,7 +51,6 @@ function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden transform transition-all hover:scale-[1.01] duration-500 border-t-8 border-blue-600">
         
-        {/* Header Bagian Atas */}
         <div className="bg-gray-50 px-8 py-8 border-b border-gray-100 flex flex-col items-center">
             <GraduationCap className="h-12 w-12 text-blue-600 mb-2 animate-bounce-slow" />
             <h2 className="text-3xl font-extrabold text-gray-900 text-center">
@@ -115,7 +113,6 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* Tombol Login */}
             <button
               type="submit"
               disabled={isLoading}
@@ -153,9 +150,5 @@ function LoginPage() {
     </div>
   );
 }
-
-// Dummy animation style definition (In a real React app, you would use a global CSS file or a CSS-in-JS library)
-// We add it here using a style tag for the single-file mandate if needed, but for simple Tailwind, we just rely on its utilities.
-// We use `animate-bounce-slow` which is assumed to be a custom utility or implemented via standard Tailwind properties.
 
 export default LoginPage;
