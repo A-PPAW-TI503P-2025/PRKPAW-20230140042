@@ -5,11 +5,16 @@ const cors = require("cors");
 const app = express();
 const PORT = 3001;
 const morgan = require("morgan");
+const path = require('path'); 
 
 // Impor router
 const presensiRoutes = require("./Routes/presensi");
 const reportRoutes = require("./Routes/reports");
 const authRoutes = require("./Routes/auth");
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // Middleware
 app.use(cors());
@@ -26,7 +31,7 @@ app.get("/", (req, res) => {
 
 const ruteBuku = require("./routes/books");
 app.use("/api/books", ruteBuku);
-app.use("/api/presensi", presensiRoutes);
+app.use("/api/attendance", presensiRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/auth", authRoutes);
 

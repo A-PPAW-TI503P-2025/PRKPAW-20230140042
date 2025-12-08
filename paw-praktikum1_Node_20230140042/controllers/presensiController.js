@@ -1,10 +1,44 @@
 const { Presensi, User } = require("../models");
 const { Op } = require("sequelize");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs'); // [BARU] Import module fs
+
+// [BARU] Cek dan buat folder 'uploads' secara otomatis saat server jalan
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+  console.log("Folder 'uploads' berhasil dibuat otomatis.");
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); 
+  },
+  filename: (req, file, cb) => {
+    // Format nama file: userId-timestamp.ext
+    cb(null, `${req.user.id}-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Hanya file gambar yang diperbolehkan!'), false);
+  }
+};
+
+exports.upload = multer({ storage: storage, fileFilter: fileFilter });
 
 // CHECK IN
 exports.CheckIn = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { id: userId } = req.user; // Ambil ID dari token user
+
+    // Ambil path foto jika ada upload
+    // Gunakan replace agar path pemisah windows (\) jadi (/) supaya aman di JSON
+    const buktiFoto = req.file ? req.file.path.replace(/\\/g, "/") : null; 
 
     // Cek apakah sudah check-in hari ini
     const today = new Date();
@@ -29,7 +63,8 @@ exports.CheckIn = async (req, res) => {
       userId,
       checkIn: new Date(),
       latitude: req.body.latitude || null,
-      longitude: req.body.longitude || null
+      longitude: req.body.longitude || null,
+      buktiFoto: buktiFoto
     });
 
     res.json({
@@ -38,8 +73,8 @@ exports.CheckIn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error); // penting supaya tahu error sebenarnya
-    res.status(500).json({ message: "Gagal check-in", error });
+    console.error("Error CheckIn:", error); 
+    res.status(500).json({ message: "Gagal check-in", error: error.message });
   }
 };
 
@@ -66,8 +101,8 @@ exports.CheckOut = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Gagal check-out", error });
+    console.error("Error CheckOut:", error);
+    res.status(500).json({ message: "Gagal check-out", error: error.message });
   }
 };
 

@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       longitude: {
         type: DataTypes.STRING,
         allowNull: true
+      },
+      buktiFoto: {
+        type: DataTypes.STRING,
+        allowNull: true
       }
     },
     {
