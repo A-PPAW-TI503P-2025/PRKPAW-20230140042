@@ -39,9 +39,18 @@ function ReportPage() {
   useEffect(() => {
     fetchReports("");
   }, [navigate]);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     fetchReports(searchTerm);
+  };
+
+  // Fungsi helper untuk merapikan URL Gambar
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    // Jika path dari DB backslash (\), ubah jadi slash (/)
+    const cleanPath = path.replace(/\\/g, "/");
+    return `http://localhost:3001/${cleanPath}`;
   };
 
   return (
@@ -79,16 +88,16 @@ function ReportPage() {
                   Nama
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Foto
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Check-In
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Check-Out
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Latitude
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Longitude
+                  Lokasi (Lat, Long)
                 </th>
               </tr>
             </thead>
@@ -99,6 +108,34 @@ function ReportPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {presensi.user ? presensi.user.nama : "N/A"}
                     </td>
+
+                    {/* --- BAGIAN YANG DIPERBAIKI --- */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {/* Ubah 'presensi.photo' menjadi 'presensi.buktiFoto' sesuai database */}
+                      {presensi.buktiFoto ? (
+                        <a 
+                          href={getImageUrl(presensi.buktiFoto)}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={getImageUrl(presensi.buktiFoto)}
+                            alt="Bukti Presensi"
+                            className="h-16 w-16 object-cover rounded-md border border-gray-200 hover:scale-110 transition-transform cursor-pointer"
+                            onError={(e) => {
+                                e.target.onerror = null; 
+                                e.target.src = "https://via.placeholder.com/150?text=Error";
+                            }}
+                          />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">
+                          Tidak ada foto
+                        </span>
+                      )}
+                    </td>
+                    {/* -------------------------------- */}
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(presensi.checkIn).toLocaleString("id-ID", {
                         timeZone: "Asia/Jakarta",
@@ -109,20 +146,20 @@ function ReportPage() {
                         ? new Date(presensi.checkOut).toLocaleString("id-ID", {
                             timeZone: "Asia/Jakarta",
                           })
-                        : "Belum Check-Out"}
+                        : <span className="text-yellow-600 font-semibold">Belum Check-Out</span>}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {presensi.latitude || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {presensi.longitude || "N/A"}
+                      <div className="flex flex-col">
+                        <span>Lat: {presensi.latitude || "-"}</span>
+                        <span>Lng: {presensi.longitude || "-"}</span>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan="3"
+                    colSpan="5"
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     Tidak ada data yang ditemukan.

@@ -1,201 +1,200 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import axios from "axios";
+import Webcam from "react-webcam";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-// Fix icon marker Leaflet
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-let DefaultIcon = L.icon({
+L.Marker.prototype.options.icon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
+  iconRetinaUrl: icon,
   iconSize: [25, 41],
-  iconAnchor: [12, 41]
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41],
 });
-L.Marker.prototype.options.icon = DefaultIcon;
 
-function PresensiPage() {
-  const [coords, setCoords] = useState(null);
+function AttendancePage() {
   const [message, setMessage] = useState("");
-  const [locationStatus, setLocationStatus] = useState("Menunggu izin lokasi...");
-  const [isLocationError, setIsLocationError] = useState(false);
+  const [error, setError] = useState("");
 
-  const getLocation = () => {
-    setIsLocationError(false);
-    setLocationStatus("Sedang mengambil lokasi...");
-    setMessage("");
+  const [coords, setCoords] = useState(null); // {lat, lng}
+  const [isLoading, setIsLoading] = useState(true);
 
-    if (!navigator.geolocation) {
-      setLocationStatus("Browser Anda tidak mendukung Geolocation.");
-      setIsLocationError(true);
-      return;
-    }
+  const [image, setImage] = useState(null); // State untuk menyimpan hasil foto
+  const webcamRef = useRef(null);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
+  const capture = useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    setImage(imageSrc);
+  }, [webcamRef]);
 
-        // Hindari undefined
-        if (!latitude || !longitude) {
-          setLocationStatus("Lokasi tidak valid. Coba ulangi.");
-          setIsLocationError(true);
-          return;
-        }
-
-        setCoords({ lat: latitude, lng: longitude });
-        setLocationStatus("Lokasi ditemukan ✅");
-      },
-      (error) => {
-        setIsLocationError(true);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationStatus("⛔ Izin lokasi ditolak. Aktifkan lokasi di browser.");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationStatus("⚠ Lokasi tidak tersedia. Pastikan GPS aktif.");
-            break;
-          case error.TIMEOUT:
-            setLocationStatus("⏳ Timeout. Coba ulangi.");
-            break;
-          default:
-            setLocationStatus("❌ Error mengambil lokasi.");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-    );
+  const getToken = () => {
+    return localStorage.getItem("token");
   };
 
+  const getLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setIsLoading(false);
+        },
+        (error) => {
+          setError("Gagal mendapatkan lokasi: " + error.message);
+          setIsLoading(false);
+        }
+      );
+    } else {
+      setError("Geolocation tidak didukung oleh browser ini.");
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     getLocation();
   }, []);
 
-  // --- CHECK IN ---
   const handleCheckIn = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setMessage("❌ Token tidak ditemukan. Silakan login ulang.");
-      return;
-    }
-
-    if (!coords) {
-      setMessage("Menunggu lokasi... Coba ulangi.");
-      getLocation();
+    if (!coords || !image) {
+      setError("Lokasi dan Foto wajib ada!");
       return;
     }
 
     try {
+      const blob = await (await fetch(image)).blob();
+
+      const formData = new FormData();
+      formData.append("latitude", coords.lat);
+      formData.append("longitude", coords.lng);
+      formData.append("image", blob, "selfie.jpg");
+
       const response = await axios.post(
-        "http://localhost:3001/api/presensi/check-in",
-        { latitude: coords.lat, longitude: coords.lng },
-        { headers: { Authorization: `Bearer ${token}` } }
+        "http://localhost:3001/api/attendance/check-in",
+
+        formData,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
 
       setMessage(response.data.message);
-    } catch (error) {
-      const errMsg = error.response?.data?.message || "Check-in gagal.";
-      setMessage(errMsg);
+    } catch (err) {
+      setError(err.response ? err.response.data.message : "Check-in gagal");
     }
   };
 
-  // --- CHECK OUT ---
   const handleCheckOut = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setMessage("❌ Token tidak ditemukan. Silakan login ulang.");
-      return;
-    }
-
+    setError("");
+    setMessage("");
     try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      };
       const response = await axios.post(
-        "http://localhost:3001/api/presensi/check-out",
+        "http://localhost:3001/api/attendance/check-out",
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        config
       );
 
       setMessage(response.data.message);
-    } catch (error) {
-      const errMsg = error.response?.data?.message || "Check-out gagal.";
-      setMessage(errMsg);
+    } catch (err) {
+      setError(err.response ? err.response.data.message : "Check-out gagal");
     }
   };
 
   return (
-    <div className="flex flex-col items-center p-8 min-h-screen bg-gray-50">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Presensi</h2>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center pt-10 pb-10">
+      {isLoading ? (
+        <div className="bg-white p-10 rounded-lg shadow-md w-full max-w-6xl mb-8 text-center">
+          <p className="text-xl font-semibold text-blue-600 animate-pulse">
+            Memuat Peta dan Mendeteksi Lokasi...
+          </p>
+          {error && <p className="text-red-600 mt-4">{error}</p>}
+        </div>
+      ) : (
+        <div className="bg-white p-4 rounded-lg shadow-md w-full mb-8 px-8 max-w-6xl">
+          <h3 className="text-xl font-semibold mb-2">Lokasi Terdeteksi:</h3>
+          <div className="my-4 border rounded-lg overflow-hidden">
+            <MapContainer
+              center={[coords.lat, coords.lng]}
+              zoom={15}
+              style={{ height: "300px", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[coords.lat, coords.lng]}>
+                <Popup>Lokasi Presensi Anda</Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        </div>
+      )}
 
-      {/* Panel Status Lokasi */}
-      <div
-        className={`mb-6 p-4 rounded-lg shadow-sm w-full max-w-md text-center border 
-        ${isLocationError ? "bg-red-50 border-red-300" : "bg-white border-gray-200"}`}
-      >
-        <p className={`font-medium ${isLocationError ? "text-red-600" : "text-green-600"}`}>
-          {locationStatus}
-        </p>
+      <div className="my-4 border rounded-lg overflow-hidden bg-black">
+        {image ? (
+          <img src={image} alt="Selfie" className="w-full" />
+        ) : (
+          <Webcam
+            audio={false}
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            className="w-full"
+          />
+        )}
+      </div>
 
-        {isLocationError && (
+      <div className="mb-4">
+        {!image ? (
           <button
-            onClick={getLocation}
-            className="mt-2 text-sm text-blue-600 hover:underline"
+            onClick={capture}
+            className="bg-blue-500 text-white px-4 py-2 rounded w-full"
           >
-            🔄 Coba Lagi
+            Ambil Foto
+          </button>
+        ) : (
+          <button
+            onClick={() => setImage(null)}
+            className="bg-gray-500 text-white px-4 py-2 rounded w-full"
+          >
+            Foto Ulang
           </button>
         )}
       </div>
 
-      {/* Peta */}
-      {coords && (
-        <div className="w-full max-w-md h-64 mb-6 rounded-lg overflow-hidden shadow-lg border border-gray-200">
-          <MapContainer
-            center={[coords.lat, coords.lng]}
-            zoom={16}
-            style={{ height: "100%", width: "100%" }}
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800">
+          Lakukan Presensi
+        </h2>
+
+        {message && <p className="text-green-600 mb-4">{message}</p>}
+        {error && <p className="text-red-600 mb-4">{error}</p>}
+
+        <div className="flex space-x-4">
+          <button
+            onClick={handleCheckIn}
+            className="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
           >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-            <Marker position={[coords.lat, coords.lng]}>
-              <Popup>Lokasi Anda Saat Ini</Popup>
-            </Marker>
-          </MapContainer>
+            Check-In
+          </button>
+
+          <button
+            onClick={handleCheckOut}
+            className="w-full py-3 px-4 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700"
+          >
+            Check-Out
+          </button>
         </div>
-      )}
-
-      {/* Tombol */}
-      <div className="flex gap-4">
-        <button
-          onClick={handleCheckIn}
-          disabled={!coords}
-          className={`px-6 py-3 rounded-lg font-bold text-white shadow-md transition 
-            ${coords ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}`}
-        >
-          Check In
-        </button>
-
-        <button
-          onClick={handleCheckOut}
-          className="px-6 py-3 rounded-lg font-bold text-white shadow-md bg-red-600 hover:bg-red-700"
-        >
-          Check Out
-        </button>
       </div>
-
-      {/* Pesan */}
-      {message && (
-        <div
-          className={`mt-6 p-4 rounded-lg border text-center w-full max-w-md 
-          ${message.includes("gagal") || message.includes("❌")
-            ? "bg-red-100 border-red-400 text-red-700"
-            : "bg-green-100 border-green-400 text-green-700"}`}
-        >
-          {message}
-        </div>
-      )}
     </div>
   );
 }
 
-export default PresensiPage;
+export default AttendancePage;
