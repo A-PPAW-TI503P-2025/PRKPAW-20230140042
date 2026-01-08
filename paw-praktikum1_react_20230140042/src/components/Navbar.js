@@ -80,7 +80,10 @@ function Navbar() {
                 Laporan Admin
               </Link>
             )}
+            <Link to="/monitoring" className="...">Monitoring Suhu</Link>
+
           </div>
+
 
           {/* Desktop User + Logout */}
           <div className="hidden md:flex items-center space-x-4">

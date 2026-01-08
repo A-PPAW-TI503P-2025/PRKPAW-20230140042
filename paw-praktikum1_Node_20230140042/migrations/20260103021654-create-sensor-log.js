@@ -2,28 +2,21 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Presensis', {
+    await queryInterface.createTable('SensorLogs', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
-        type: Sequelize.INTEGER,
-        allowNull: false
+      suhu: {
+        type: Sequelize.FLOAT
       },
-      nama: {
-        type: Sequelize.STRING,
-        allowNull: false
+      kelembaban: {
+        type: Sequelize.FLOAT
       },
-      checkIn: {
-        allowNull: false,
-        type: Sequelize.DATE
-      },
-      checkOut: {
-        allowNull: true, // checkOut bisa kosong saat pertama kali check-in
-        type: Sequelize.DATE
+      cahaya: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,
@@ -36,6 +29,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Presensis');
+    await queryInterface.dropTable('SensorLogs');
   }
 };

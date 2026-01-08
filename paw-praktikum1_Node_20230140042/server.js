@@ -11,6 +11,7 @@ const path = require('path');
 const presensiRoutes = require("./Routes/presensi");
 const reportRoutes = require("./Routes/reports");
 const authRoutes = require("./Routes/auth");
+const iotRoutes = require("./Routes/iot");
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -29,11 +30,12 @@ app.get("/", (req, res) => {
   res.send("Home Page for API");
 });
 
-const ruteBuku = require("./routes/books");
+const ruteBuku = require("./Routes/books");
 app.use("/api/books", ruteBuku);
 app.use("/api/attendance", presensiRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/iot", iotRoutes);
 
 app.listen(PORT, () => {
   console.log(`Express server running at http://localhost:${PORT}/`);
